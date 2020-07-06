@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <ostream>
+#include <vector>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -53,5 +54,20 @@ template <class t> std::ostream& operator<<(std::ostream& s, Vec3<t>& v) {
 	s << "(" << v.x << ", " << v.y << ", " << v.z << ")\n";
 	return s;
 }
+
+/*
+template <typename T>
+class Array2D {
+  std::vector<T> buffer;
+  int height;
+  int width;
+public:  
+ std:array<int, 2> GetSize() const;
+ void SetSize(int h, int w);
+  void Clear();
+  T & operator()(int i, int j);
+  const T &operator()(int i, int j) const;
+};
+*/
 
 #endif //__GEOMETRY_H__

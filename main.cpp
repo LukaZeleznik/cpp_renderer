@@ -1,7 +1,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-#include<bits/stdc++.h> 
+#include <bits/stdc++.h> 
 
 #include "tgaimage.h"
 #include "model.h"
@@ -20,7 +20,7 @@ Vec3f cross(Vec3f a, Vec3f b){
 }
 
 
-Vec3f barrycentric(int pts[3][2], int x, int y){
+Vec3f barricentric(float pts[3][2], int x, int y){
     
     Vec3f u = cross(Vec3f(pts[2][0]-pts[0][0], pts[1][0]-pts[0][0], pts[0][0]-x), Vec3f(pts[2][1]-pts[0][1], pts[1][1]-pts[0][1], pts[0][1]-y));
 
@@ -29,39 +29,48 @@ Vec3f barrycentric(int pts[3][2], int x, int y){
 }
 
 
-void triangle(std::unique_ptr<Model> &model,std::vector<int> face, TGAImage &image, const TGAColor &color, float z_buffer[][height]){
-    int pts[3][2];
+void triangle(std::unique_ptr<Model> &model,std::vector<int> face, TGAImage &image, TGAImage &texture, std::array<std::array<float, height>, width> &z_buffer, TGAColor &color){
+    float pts[3][2];
     int minx = image.get_width()-1;
     int miny = image.get_height()-1;
     int maxx = 0;
     int maxy = 0;
+    int a, b;
+    Vec2f t_coords[3];
     Vec3f w_coords[3];
     for (int j=0; j<3; j++){
         Vec3f v0 = model->vert(face[j]);
+        t_coords[j] = model->get_texture(face[j]);
         w_coords[j] = v0;
         //transform into screen coordinates
-        pts[j][0]= (v0.x+1.)*width/2.; 
-        minx = std::min(minx, pts[j][0]);
-        maxx = std::max(maxx, pts[j][0]);
-        pts[j][1] = (v0.y+1.)*height/2.; 
-        miny = std::min(miny, pts[j][1]);
-        maxy = std::max(maxy, pts[j][1]);
+        a = (v0.x+1.)*width/2.; 
+        minx = std::min(minx, a);
+        maxx = std::max(maxx, a);
+        b = (v0.y+1.)*height/2.; 
+        miny = std::min(miny, b);
+        maxy = std::max(maxy, b);
+        pts[j][0] = a;
+        pts[j][1] = b;
     }
     Vec3f norm = cross(w_coords[2] - w_coords[0], w_coords[1]-w_coords[0]);
     norm.normalize();
-
-
 
     float dp = norm*Vec3f(0, 0, -1);
     if (dp < 0) return;
     for (int x=minx; x< maxx; x++){
         for (int y=miny; y<maxy; y++){
-            Vec3f coords= barrycentric(pts, x, y);
+            Vec3f coords = barricentric(pts, x, y);
             float z = coords.x * w_coords[1].z + coords.y * w_coords[0].z + coords.z * w_coords[2].z;
-                if (z < z_buffer[x][y]) continue;
+            if (z < z_buffer[x][y]) continue;
             if (coords.x >= 0 && coords.y >= 0 && coords.z >= 0){
                 z_buffer[x][y] = z;
-                image.set(x,y, TGAColor(255*dp, 255*dp, 255*dp, 255));
+                float v = 0.;
+                float u = 0.;
+                for (int i = 0; i<3; i++) u += coords.raw[i] * (t_coords[i].u * texture.get_width());
+                for (int i = 0; i<3; i++) v += coords.raw[i] * (t_coords[i].v * texture.get_height());
+
+                TGAColor c  = texture.get(u, v);
+                image.set(x,y, TGAColor(c.r * dp, c.g*dp, c.b*dp, 255) );
             }
         }
     }
@@ -106,8 +115,14 @@ void line(int x0, int y0, int x1, int y1, TGAImage &image, const TGAColor &color
 
 void render(){
 	TGAImage image(width, height, TGAImage::RGB);
-    std::unique_ptr<Model> model(new Model("obj/african_head.obj"));
-    float z_buffer[height][width];
+    TGAImage texture = TGAImage();
+    if (!texture.read_tga_file("../african_head_diffuse.tga")) return;
+    texture.flip_vertically();
+    //TODO: texture belongs to a model, load it there
+    std::unique_ptr<Model> model(new Model());
+    if (!model->read("../obj/african_head.obj")) return;
+
+    std::array<std::array<float, height>, width> z_buffer;
     for(int i=0; i < width; i++)
         for(int j=0; j < height; j++)
             z_buffer[i][j] = -1000000.f;
@@ -128,8 +143,8 @@ void render(){
             //line(x0, y0, x1, y1, image, white);  
         }
         */
-        triangle(model, face, image, TGAColor(rand()% 255, rand()%255, rand()%255, 255), z_buffer);
-        
+        TGAColor c = TGAColor(rand()%255, rand()%255, rand()%255, 255);
+        triangle(model, face, image, texture, z_buffer, c);
     }
 
 	image.flip_vertically(); // i want to have the origin at the left bottom corner of the image
