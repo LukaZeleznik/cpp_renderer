@@ -2,7 +2,7 @@
 #define __MODEL_H__
 
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 #include "geometry.h"
 
@@ -11,9 +11,8 @@ private:
 	std::vector<Vec3f> verts_;
 	std::vector<std::vector<int> > faces_;
     std::vector<Vec2f> textures_;
-    std::map<int, int> vert2text_;
+    std::unordered_map<int, int> vert2text_;
 public:
-    Model()=default;
 	int nverts();
 	int nfaces();
 	Vec3f vert(int i);

@@ -2,6 +2,8 @@
 #include <memory>
 #include <vector>
 #include <bits/stdc++.h> 
+#include <eigen3/Eigen/Dense>
+#include <math.h>
 
 #include "tgaimage.h"
 #include "model.h"
@@ -29,7 +31,18 @@ Vec3f barricentric(float pts[3][2], int x, int y){
 }
 
 
-void triangle(std::unique_ptr<Model> &model,std::vector<int> face, TGAImage &image, TGAImage &texture, std::array<std::array<float, height>, width> &z_buffer, TGAColor &color){
+void triangle(std::unique_ptr<Model> &model,int face_idx, TGAImage &image, TGAImage &texture, std::array<std::array<float, height>, width> &z_buffer, const Eigen::Matrix4f &mat){
+    std::vector<int> face = model->face(face_idx);
+    Eigen::Matrix<float, 4, 3> homogenous;
+    Vec3f wc[3];
+    for (int i=0; i<3; i++){
+        wc[i] = model->vert(face[i]);
+        for (int j=0; j<3; j++)
+            homogenous(j, i) = model->vert(face[i]).raw[j];
+        homogenous(3, i) = 1;
+    }
+    Eigen::Matrix<float, 4, 3> projected = mat * homogenous;
+
     float pts[3][2];
     int minx = image.get_width()-1;
     int miny = image.get_height()-1;
@@ -39,9 +52,9 @@ void triangle(std::unique_ptr<Model> &model,std::vector<int> face, TGAImage &ima
     Vec2f t_coords[3];
     Vec3f w_coords[3];
     for (int j=0; j<3; j++){
-        Vec3f v0 = model->vert(face[j]);
-        t_coords[j] = model->get_texture(face[j]);
+        Vec3f v0 = Eigen::Vector4f(projected.col(j));
         w_coords[j] = v0;
+        t_coords[j] = model->get_texture(face[j]);
         //transform into screen coordinates
         a = (v0.x+1.)*width/2.; 
         minx = std::min(minx, a);
@@ -52,7 +65,11 @@ void triangle(std::unique_ptr<Model> &model,std::vector<int> face, TGAImage &ima
         pts[j][0] = a;
         pts[j][1] = b;
     }
-    Vec3f norm = cross(w_coords[2] - w_coords[0], w_coords[1]-w_coords[0]);
+    minx = std::max(0, minx);
+    miny = std::max(0, miny);
+    maxx = std::min(width, maxx);
+    maxy = std::min(height, maxy);
+    Vec3f norm = (wc[2] - wc[0])^(wc[1]-wc[0]);
     norm.normalize();
 
     float dp = norm*Vec3f(0, 0, -1);
@@ -74,7 +91,6 @@ void triangle(std::unique_ptr<Model> &model,std::vector<int> face, TGAImage &ima
             }
         }
     }
-    //TODO: clamp v image size
 }
 
 
@@ -112,6 +128,33 @@ void line(int x0, int y0, int x1, int y1, TGAImage &image, const TGAColor &color
    
 }
 
+Eigen::Matrix4f modelView(Radian rx, Radian ry, Radian rz, float tx, float ty){
+    Eigen::Matrix4f rot_x = Eigen::Matrix4f::Identity();
+    Eigen::Matrix4f rot_y = Eigen::Matrix4f::Identity();
+    Eigen::Matrix4f rot_z = Eigen::Matrix4f::Identity();
+    Eigen::Matrix4f translation = Eigen::Matrix4f::Zero();
+
+    translation(0,3) = tx;
+    translation(1,3) = ty;
+
+    rot_x(1,1) = std::cos(rx);
+    rot_x(2,2) = std::cos(rx);
+    rot_x(1,2) = -std::sin(rx);
+    rot_x(2,1) = std::sin(rx);
+
+    rot_z(0,0) = std::cos(rz);
+    rot_z(1,1) = std::cos(rz);
+    rot_z(0,1) = -std::sin(rz);
+    rot_z(1,0) = std::sin(rz);
+    
+    rot_y(0,0) = std::cos(ry);
+    rot_y(0,2) = std::sin(ry);
+    rot_y(2,0) = std::sin(ry);
+    rot_y(2,2) = std::cos(ry);
+
+    return rot_x * rot_y * rot_z + translation;
+}
+
 
 void render(){
 	TGAImage image(width, height, TGAImage::RGB);
@@ -122,29 +165,15 @@ void render(){
     std::unique_ptr<Model> model(new Model());
     if (!model->read("../obj/african_head.obj")) return;
 
+    auto mm = modelView(Degree(0), Degree(0), Degree(0), .5, 0.5);
+
     std::array<std::array<float, height>, width> z_buffer;
     for(int i=0; i < width; i++)
         for(int j=0; j < height; j++)
             z_buffer[i][j] = -1000000.f;
 
     for (int i=0; i < model->nfaces(); i++){
-        std::vector<int> face = model->face(i);
-        if (face.size() > 3)
-            std::cout << "ni trikotnik" << std::endl;
-        /*
-        for (int j=0; j<3; j++){
-            Vec3f v0 = model->vert(face[j]);
-            Vec3f v1 = model->vert(face[(j+1)%3]);
-            //transform into screen coordinates
-            int x0 = (v0.x+1.)*width/2.; 
-            int y0 = (v0.y+1.)*height/2.; 
-            int x1 = (v1.x+1.)*width/2.; 
-            int y1 = (v1.y+1.)*height/2.; 
-            //line(x0, y0, x1, y1, image, white);  
-        }
-        */
-        TGAColor c = TGAColor(rand()%255, rand()%255, rand()%255, 255);
-        triangle(model, face, image, texture, z_buffer, c);
+        triangle(model, i, image, texture, z_buffer, mm);
     }
 
 	image.flip_vertically(); // i want to have the origin at the left bottom corner of the image

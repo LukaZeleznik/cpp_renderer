@@ -4,39 +4,43 @@
 #include <cmath>
 #include <ostream>
 #include <vector>
+#include <eigen3/Eigen/Dense>
+#include <math.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-template <class t> struct Vec2 {
+template <class T> struct Vec2 {
 	union {
-		struct {t u, v;};
-		struct {t x, y;};
-		t raw[2];
+		struct {T u, v;};
+		struct {T x, y;};
+		T raw[2];
 	};
 	Vec2() : u(0), v(0) {}
-	Vec2(t _u, t _v) : u(_u),v(_v) {}
-	inline Vec2<t> operator +(const Vec2<t> &V) const { return Vec2<t>(u+V.u, v+V.v); }
-	inline Vec2<t> operator -(const Vec2<t> &V) const { return Vec2<t>(u-V.u, v-V.v); }
-	inline Vec2<t> operator *(float f)          const { return Vec2<t>(u*f, v*f); }
-	template <class > friend std::ostream& operator<<(std::ostream& s, Vec2<t>& v);
+	Vec2(T _u, T _v) : u(_u),v(_v) {}
+	inline Vec2<T> operator +(const Vec2<T> &V) const { return Vec2<T>(u+V.u, v+V.v); }
+	inline Vec2<T> operator -(const Vec2<T> &V) const { return Vec2<T>(u-V.u, v-V.v); }
+	inline Vec2<T> operator *(float f)          const { return Vec2<T>(u*f, v*f); }
+	template <class > friend std::ostream& operator<<(std::ostream& s, Vec2<T>& v);
 };
 
-template <class t> struct Vec3 {
+template <class T> struct Vec3 {
 	union {
-		struct {t x, y, z;};
-		struct { t ivert, iuv, inorm; };
-		t raw[3];
+		struct {T x, y, z;};
+		struct { T ivert, iuv, inorm; };
+		T raw[3];
 	};
 	Vec3() : x(0), y(0), z(0) {}
-	Vec3(t _x, t _y, t _z) : x(_x),y(_y),z(_z) {}
-	inline Vec3<t> operator ^(const Vec3<t> &v) const { return Vec3<t>(y*v.z-z*v.y, z*v.x-x*v.z, x*v.y-y*v.x); }
-	inline Vec3<t> operator +(const Vec3<t> &v) const { return Vec3<t>(x+v.x, y+v.y, z+v.z); }
-	inline Vec3<t> operator -(const Vec3<t> &v) const { return Vec3<t>(x-v.x, y-v.y, z-v.z); }
-	inline Vec3<t> operator *(float f)          const { return Vec3<t>(x*f, y*f, z*f); }
-	inline t       operator *(const Vec3<t> &v) const { return x*v.x + y*v.y + z*v.z; }
+	Vec3(T _x, T _y, T _z) : x(_x),y(_y),z(_z) {}
+    Vec3(const Eigen::Matrix<T,3,1> &mat) : x{mat[0]}, y{mat[1]}, z{mat[2]} {}
+    Vec3(const Eigen::Matrix<T,4,1> &mat) : x{mat[0]/mat[3]}, y{mat[1]/mat[3]}, z{mat[2]/mat[3]} {} 
+	inline Vec3<T> operator ^(const Vec3<T> &v) const { return Vec3<T>(y*v.z-z*v.y, z*v.x-x*v.z, x*v.y-y*v.x); }
+	inline Vec3<T> operator +(const Vec3<T> &v) const { return Vec3<T>(x+v.x, y+v.y, z+v.z); }
+	inline Vec3<T> operator -(const Vec3<T> &v) const { return Vec3<T>(x-v.x, y-v.y, z-v.z); }
+	inline Vec3<T> operator *(float f)          const { return Vec3<T>(x*f, y*f, z*f); }
+	inline T       operator *(const Vec3<T> &v) const { return x*v.x + y*v.y + z*v.z; }
 	float norm () const { return std::sqrt(x*x+y*y+z*z); }
-	Vec3<t> & normalize(t l=1) { *this = (*this)*(l/norm()); return *this; }
-	template <class > friend std::ostream& operator<<(std::ostream& s, Vec3<t>& v);
+	Vec3<T> & normalize(T l=1) { *this = (*this)*(l/norm()); return *this; }
+	template <class > friend std::ostream& operator<<(std::ostream& s, Vec3<T>& v);
 };
 
 typedef Vec2<float> Vec2f;
@@ -45,29 +49,35 @@ typedef Vec3<float> Vec3f;
 typedef Vec3<int>   Vec3i;
 //Bolje z using
 
-template <class t> std::ostream& operator<<(std::ostream& s, Vec2<t>& v) {
+template <class T> std::ostream& operator<<(std::ostream& s, Vec2<T>& v) {
 	s << "(" << v.x << ", " << v.y << ")\n";
 	return s;
 }
 
-template <class t> std::ostream& operator<<(std::ostream& s, Vec3<t>& v) {
+template <class T> std::ostream& operator<<(std::ostream& s, Vec3<T>& v) {
 	s << "(" << v.x << ", " << v.y << ", " << v.z << ")\n";
 	return s;
 }
 
-/*
-template <typename T>
-class Array2D {
-  std::vector<T> buffer;
-  int height;
-  int width;
-public:  
- std:array<int, 2> GetSize() const;
- void SetSize(int h, int w);
-  void Clear();
-  T & operator()(int i, int j);
-  const T &operator()(int i, int j) const;
+
+class Degree{
+    float deg;
+    public:
+    explicit Degree(float d){deg=d;}
+    float degree() {return deg;}
+    void set_degree(float d) {deg=d;};
+
 };
-*/
+
+
+class Radian{
+    float rad;
+    public:
+    explicit Radian(float r) {rad = r;}
+    Radian(Degree d) {rad = d.degree() * M_PI/180;}
+    //conversion operator
+    operator float() {return rad;}
+    float radian() {return rad;}
+};
 
 #endif //__GEOMETRY_H__
