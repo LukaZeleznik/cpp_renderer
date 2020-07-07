@@ -170,7 +170,7 @@ void render(){
 
     for(int i=0; i < width; i++)
         for(int j=0; j < height; j++)
-            z_buffer[i][j] = -10000000.f;// -std::numeric_limits<float>::max();
+            z_buffer[i][j] = -std::numeric_limits<float>::max();
 
     for (int i=0; i < model->nfaces(); i++)
         triangle(model, i, image, z_buffer, mm);
