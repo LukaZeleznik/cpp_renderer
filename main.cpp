@@ -4,6 +4,7 @@
 #include <bits/stdc++.h> 
 #include <eigen3/Eigen/Dense>
 #include <math.h>
+#include <limits>
 
 #include "tgaimage.h"
 #include "model.h"
@@ -31,7 +32,7 @@ Vec3f barricentric(float pts[3][2], int x, int y){
 }
 
 
-void triangle(std::unique_ptr<Model> &model,int face_idx, TGAImage &image, TGAImage &texture, std::array<std::array<float, height>, width> &z_buffer, const Eigen::Matrix4f &mat){
+void triangle(std::unique_ptr<Model> &model,int face_idx, TGAImage &image, std::array<std::array<float, height>, width> &z_buffer, const Eigen::Matrix4f &mat){
     std::vector<int> face = model->face(face_idx);
     Eigen::Matrix<float, 4, 3> homogenous;
     Vec3f wc[3];
@@ -54,7 +55,7 @@ void triangle(std::unique_ptr<Model> &model,int face_idx, TGAImage &image, TGAIm
     for (int j=0; j<3; j++){
         Vec3f v0 = Eigen::Vector4f(projected.col(j));
         w_coords[j] = v0;
-        t_coords[j] = model->get_texture(face[j]);
+        t_coords[j] = model->get_texture_ids(face[j]);
         //transform into screen coordinates
         a = (v0.x+1.)*width/2.; 
         minx = std::min(minx, a);
@@ -83,10 +84,12 @@ void triangle(std::unique_ptr<Model> &model,int face_idx, TGAImage &image, TGAIm
                 z_buffer[x][y] = z;
                 float v = 0.;
                 float u = 0.;
-                for (int i = 0; i<3; i++) u += coords.raw[i] * (t_coords[i].u * texture.get_width());
-                for (int i = 0; i<3; i++) v += coords.raw[i] * (t_coords[i].v * texture.get_height());
+                for (int i = 0; i<3; i++) 
+                    u += coords.raw[i] * (t_coords[i].u * model->get_t_width());
+                for (int i = 0; i<3; i++)
+                    v += coords.raw[i] * (t_coords[i].v * model->get_t_height());
 
-                TGAColor c  = texture.get(u, v);
+                TGAColor c  = model->get_uv(u, v);
                 image.set(x,y, TGAColor(c.r * dp, c.g*dp, c.b*dp, 255) );
             }
         }
@@ -158,25 +161,22 @@ Eigen::Matrix4f modelView(Radian rx, Radian ry, Radian rz, float tx, float ty){
 
 void render(){
 	TGAImage image(width, height, TGAImage::RGB);
-    TGAImage texture = TGAImage();
-    if (!texture.read_tga_file("../african_head_diffuse.tga")) return;
-    texture.flip_vertically();
-    //TODO: texture belongs to a model, load it there
     std::unique_ptr<Model> model(new Model());
+    if (!model->read_texture("../african_head_diffuse.tga", width, height)) return;
     if (!model->read("../obj/african_head.obj")) return;
 
-    auto mm = modelView(Degree(0), Degree(0), Degree(0), .5, 0.5);
-
+    auto mm = modelView(Degree(0), Degree(30), Degree(0), 0, 0);
     std::array<std::array<float, height>, width> z_buffer;
+
     for(int i=0; i < width; i++)
         for(int j=0; j < height; j++)
-            z_buffer[i][j] = -1000000.f;
+            z_buffer[i][j] = -10000000.f;// -std::numeric_limits<float>::max();
 
-    for (int i=0; i < model->nfaces(); i++){
-        triangle(model, i, image, texture, z_buffer, mm);
-    }
+    for (int i=0; i < model->nfaces(); i++)
+        triangle(model, i, image, z_buffer, mm);
+    
 
-	image.flip_vertically(); // i want to have the origin at the left bottom corner of the image
+	image.flip_vertically();
 	image.write_tga_file("output.tga");
 }
 
@@ -184,5 +184,4 @@ int main(int argc, char** argv) {
 
     render();
 
-	return 0;
-}
+	return 0;}

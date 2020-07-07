@@ -3,8 +3,10 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include "model.h"
 #include <bits/stdc++.h> 
+
+#include "model.h"
+#include "tgaimage.h"
 
 bool Model::read(const char *filename){
     std::ifstream in;
@@ -39,14 +41,29 @@ bool Model::read(const char *filename){
         else if (!line.compare(0, 2, "vt")){
             Vec2f v;
             iss >> trash >> trash >> v.u >> trash >> v.v;
-            textures_.push_back(v);
+            texture_ids.push_back(v);
         }
     }
     std::cout << "# v# " << verts_.size() 
               << " f# "  << faces_.size() 
-              << " t# " << textures_.size()
+              << " t# " << texture_ids.size()
               << std::endl;
     return true;
+}
+
+bool Model::read_texture(const char *filename, int width, int height){
+    texture_ = TGAImage();
+    if (!texture_.read_tga_file(filename)) return false;
+    texture_.flip_vertically();
+    return true;
+}
+
+int Model::get_t_width(){
+    return texture_.get_width();
+}
+
+int Model::get_t_height(){
+    return texture_.get_height();
 }
 
 int Model::nverts() {
@@ -65,10 +82,16 @@ Vec3f Model::vert(int i) {
     return verts_[i];
 }
 
-Vec2f Model::get_texture(int vert_idx){
+TGAColor Model::get_uv(int x, int y){
+    return texture_.get(x ,y);
+}
+
+
+
+Vec2f Model::get_texture_ids(int vert_idx){
     const auto iter = vert2text_.find(vert_idx);
     if  (iter != vert2text_.end())
-        return textures_[vert2text_[vert_idx]];
+        return texture_ids[vert2text_[vert_idx]];
     std::cerr << vert_idx << std::endl;
     std::cerr << "Vertex texture mapping missmatch" << std::endl;
     return Vec2f(-1., -1.);

@@ -43,11 +43,10 @@ template <class T> struct Vec3 {
 	template <class > friend std::ostream& operator<<(std::ostream& s, Vec3<T>& v);
 };
 
-typedef Vec2<float> Vec2f;
-typedef Vec2<int>   Vec2i;
-typedef Vec3<float> Vec3f;
-typedef Vec3<int>   Vec3i;
-//Bolje z using
+using Vec2f = Vec2<float>;
+using Vec2i = Vec2<int>;
+using Vec3f = Vec3<float>;
+using Vec3i = Vec3<int>;
 
 template <class T> std::ostream& operator<<(std::ostream& s, Vec2<T>& v) {
 	s << "(" << v.x << ", " << v.y << ")\n";
