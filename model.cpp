@@ -43,10 +43,17 @@ bool Model::read(const char *filename){
             iss >> trash >> trash >> v.u >> trash >> v.v;
             texture_ids.push_back(v);
         }
+
+        else if (!line.compare(0, 2, "vn")){
+            Vec3f v ;
+            iss >> trash >> trash >> v.x >> v.y >> v.z;
+            normals_.push_back(v);
+        }
     }
     std::cout << "# v# " << verts_.size() 
               << " f# "  << faces_.size() 
               << " t# " << texture_ids.size()
+              << " normals "  << normals_.size()
               << std::endl;
     return true;
 }
@@ -56,6 +63,12 @@ bool Model::read_texture(const char *filename, int width, int height){
     if (!texture_.read_tga_file(filename)) return false;
     texture_.flip_vertically();
     return true;
+}
+
+Vec3f Model::vertex_normal(int idx){
+    if (idx >= normals_.size())
+        return Vec3f(-1., -1., -1.);
+    return normals_[idx];
 }
 
 int Model::get_t_width(){

@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <ostream>
+#include <iostream>
 #include <vector>
 #include <eigen3/Eigen/Dense>
 #include <math.h>
@@ -35,12 +36,14 @@ template <class T> struct Vec3 {
     Vec3(const Eigen::Matrix<T,4,1> &mat) : x{mat[0]/mat[3]}, y{mat[1]/mat[3]}, z{mat[2]/mat[3]} {} 
 	inline Vec3<T> operator ^(const Vec3<T> &v) const { return Vec3<T>(y*v.z-z*v.y, z*v.x-x*v.z, x*v.y-y*v.x); }
 	inline Vec3<T> operator +(const Vec3<T> &v) const { return Vec3<T>(x+v.x, y+v.y, z+v.z); }
+	inline Vec3<T> operator +=(const Vec3<T> &v)  { x+=v.x; y+=v.y; z+=v.z; return *this; }
 	inline Vec3<T> operator -(const Vec3<T> &v) const { return Vec3<T>(x-v.x, y-v.y, z-v.z); }
 	inline Vec3<T> operator *(float f)          const { return Vec3<T>(x*f, y*f, z*f); }
 	inline T       operator *(const Vec3<T> &v) const { return x*v.x + y*v.y + z*v.z; }
 	float norm () const { return std::sqrt(x*x+y*y+z*z); }
 	Vec3<T> & normalize(T l=1) { *this = (*this)*(l/norm()); return *this; }
 	template <class > friend std::ostream& operator<<(std::ostream& s, Vec3<T>& v);
+    operator Eigen::Matrix<T, 3, 1>(){return Eigen::Matrix<T,3,1>(x,y,z);}
 };
 
 using Vec2f = Vec2<float>;
@@ -57,6 +60,92 @@ template <class T> std::ostream& operator<<(std::ostream& s, Vec3<T>& v) {
 	s << "(" << v.x << ", " << v.y << ", " << v.z << ")\n";
 	return s;
 }
+
+template <class T, int M, int N> struct Mat{
+    //for our use, matrix needs to be zero initalized
+    std::array<std::array<T, N>, M> arr = {};
+
+
+    T & operator()(int i, int j){
+        return arr[i][j];
+    }
+
+    const T & operator()(int i, int j) const {
+        return arr[i][j];
+    }
+
+    template <int O>
+    Mat<T, M, O> operator *(const Mat<T, N, O> &other) const{
+        Mat<T, M, O> ret{};
+        for (int i=0; i < M; i++){
+            for (int j=0; j < O; j++){
+                for (int k=0; k<N; k++){
+                ret(i, j) += arr[i][k] * other(k, j);
+                }
+            }
+        }    
+        return ret;
+    } 
+
+    Mat<T, M, N> & operator +=(const Mat<T, M, N> &other){
+        for (int i=0; i<M; i++)
+            for (int j=0; j<N; j++)
+                arr[i][j] += other(i, j);
+        return *this;
+    }
+
+    Mat<T, M, N> operator +(const Mat<T, M, N> &other) const{
+        Mat<T, M, N> ret(*this);
+        ret += other;
+        return ret;
+    }
+
+    Mat<T, M, N>  & identity(){
+        arr = {};
+        for (int i=0; i<M; i++)
+            arr[i][i] = 1;
+        return *this;
+    }
+
+    /*
+    Mat<T, M, 1> col(const int idx) const {
+        Mat<T,M, 1> ret();
+        for (int i=0; i<M; i++)
+            ret(idx,0) = arr[i][idx];
+        return ret;
+    }
+    */
+
+    //TODO: prestavi na svoje
+    Mat<T, 3, N> from_homog() const{
+        Mat<T, 3, N> ret{};
+        for (int i=0; i<N; i++)
+            for (int j=0; j < 3; j++){
+                ret(j, i) = arr[j][i] / arr[3][i];
+            }
+        return ret;
+    }
+
+    Vec3f col(int j){
+        return Vec3f(arr[0][j], arr[1][j], arr[2][j]);
+    }
+
+friend std::ostream & operator << (std::ostream & os, const Mat<T, M, N> & matrix) {
+for(int i=0; i<M;++i){
+   for(int j = 0; j< N;++j)
+      os << matrix(i, j) << " ";
+   os << std::endl;
+}
+}
+    
+
+};
+using Mat4f = Mat<float, 4, 4>;
+using Mat3f = Mat<float, 3, 3>;
+using Mat2f = Mat<float, 2, 2>;
+
+
+
 
 
 class Degree{

@@ -13,6 +13,7 @@ private:
 	std::vector<std::vector<int> > faces_;
     std::vector<Vec2f> texture_ids;
     std::unordered_map<int, int> vert2text_;
+    std::vector<Vec3f> normals_;
     TGAImage texture_;
 public:
 	int nverts();
@@ -25,6 +26,7 @@ public:
     TGAColor get_uv(int x, int y);
     int get_t_width();
     int get_t_height();
+    Vec3f vertex_normal(int idx);
 };
 
 #endif //__MODEL_H__
