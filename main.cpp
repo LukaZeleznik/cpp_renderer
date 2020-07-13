@@ -18,7 +18,9 @@ const int height = 800;
 
 Vec3f barricentric(float pts[3][2], int x, int y){
     
-    Vec3f u = Vec3f(pts[2][0]-pts[0][0], pts[1][0]-pts[0][0], pts[0][0]-x)^Vec3f(pts[2][1]-pts[0][1], pts[1][1]-pts[0][1], pts[0][1]-y);
+    Vec3f u = Vec3f(pts[2][0]-pts[0][0], pts[1][0]-pts[0][0],
+                    pts[0][0]-x)^Vec3f(pts[2][1]-pts[0][1],
+                    pts[1][1]-pts[0][1], pts[0][1]-y);
 
     if (std::abs(u.z)<1) return Vec3f(-1,1,1);
         return Vec3f(1.f-(u.x+u.y)/u.z, u.y/u.z, u.x/u.z); 
@@ -45,7 +47,7 @@ void triangle(std::unique_ptr<Model> &model,int face_idx, TGAImage &image, std::
     int maxy = 0;
     int a, b;
     Vec2f t_coords[3];
-    Mat3f w_coords = projected.from_homog();
+    Mat3f w_coords = from_homog(projected);
     for (int j=0; j<3; j++){
         Vec3f v0 = w_coords.col(j);
 
@@ -161,9 +163,6 @@ const Mat4f modelView(Radian rx, Radian ry, Radian rz, float tx, float ty){
     rot_y(0,2) = std::sin(ry);
     rot_y(2,0) = -std::sin(ry);
     rot_y(2,2) = std::cos(ry);
-    std::cout << rot_x  << std::endl;
-    std::cout << rot_x + rot_x << std::endl;
-
     return rot_x * rot_y * rot_z + translation;
 }
 
@@ -203,14 +202,5 @@ void render(){
 int main(int argc, char** argv) {
     
     render();
-    //a +=b;
-    Mat2f a{};
-    Mat2f b{};
-    a(0,0) = 1.f;
-    a(1,1) = 2.f;
-    b(0,0) = 4.f;
-    b(1,1) = .7f;
-
-    
-
-	return 0;}
+	return 0;
+}

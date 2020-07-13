@@ -107,25 +107,6 @@ template <class T, int M, int N> struct Mat{
         return *this;
     }
 
-    /*
-    Mat<T, M, 1> col(const int idx) const {
-        Mat<T,M, 1> ret();
-        for (int i=0; i<M; i++)
-            ret(idx,0) = arr[i][idx];
-        return ret;
-    }
-    */
-
-    //TODO: prestavi na svoje
-    Mat<T, 3, N> from_homog() const{
-        Mat<T, 3, N> ret{};
-        for (int i=0; i<N; i++)
-            for (int j=0; j < 3; j++){
-                ret(j, i) = arr[j][i] / arr[3][i];
-            }
-        return ret;
-    }
-
     Vec3f col(int j){
         return Vec3f(arr[0][j], arr[1][j], arr[2][j]);
     }
@@ -136,7 +117,9 @@ for(int i=0; i<M;++i){
       os << matrix(i, j) << " ";
    os << std::endl;
 }
-}
+};
+
+
     
 
 };
@@ -144,6 +127,15 @@ using Mat4f = Mat<float, 4, 4>;
 using Mat3f = Mat<float, 3, 3>;
 using Mat2f = Mat<float, 2, 2>;
 
+template<class T, int N>
+Mat<T, 3, N> from_homog(const Mat<T, 4, N> &m){
+    Mat<T, 3, N> ret{};
+    for (int i=0; i<N; i++)
+        for (int j=0; j < 3; j++){
+            ret(j, i) = m(j,i) / m(3, i);
+        }
+    return ret;
+}
 
 
 
