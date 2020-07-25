@@ -18,9 +18,9 @@ template <class T> struct Vec2 {
 	};
 	Vec2() : u(0), v(0) {}
 	Vec2(T _u, T _v) : u(_u),v(_v) {}
-	inline Vec2<T> operator +(const Vec2<T> &V) const { return Vec2<T>(u+V.u, v+V.v); }
-	inline Vec2<T> operator -(const Vec2<T> &V) const { return Vec2<T>(u-V.u, v-V.v); }
-	inline Vec2<T> operator *(float f)          const { return Vec2<T>(u*f, v*f); }
+	Vec2<T> operator +(const Vec2<T> &V) const { return Vec2<T>(u+V.u, v+V.v); }
+	Vec2<T> operator -(const Vec2<T> &V) const { return Vec2<T>(u-V.u, v-V.v); }
+	Vec2<T> operator *(float f)          const { return Vec2<T>(u*f, v*f); }
 	template <class > friend std::ostream& operator<<(std::ostream& s, Vec2<T>& v);
 };
 
@@ -34,12 +34,12 @@ template <class T> struct Vec3 {
 	Vec3(T _x, T _y, T _z) : x(_x),y(_y),z(_z) {}
     Vec3(const Eigen::Matrix<T,3,1> &mat) : x{mat[0]}, y{mat[1]}, z{mat[2]} {}
     Vec3(const Eigen::Matrix<T,4,1> &mat) : x{mat[0]/mat[3]}, y{mat[1]/mat[3]}, z{mat[2]/mat[3]} {} 
-	inline Vec3<T> operator ^(const Vec3<T> &v) const { return Vec3<T>(y*v.z-z*v.y, z*v.x-x*v.z, x*v.y-y*v.x); }
-	inline Vec3<T> operator +(const Vec3<T> &v) const { return Vec3<T>(x+v.x, y+v.y, z+v.z); }
-	inline Vec3<T> operator +=(const Vec3<T> &v)  { x+=v.x; y+=v.y; z+=v.z; return *this; }
-	inline Vec3<T> operator -(const Vec3<T> &v) const { return Vec3<T>(x-v.x, y-v.y, z-v.z); }
-	inline Vec3<T> operator *(float f)          const { return Vec3<T>(x*f, y*f, z*f); }
-	inline T       operator *(const Vec3<T> &v) const { return x*v.x + y*v.y + z*v.z; }
+	Vec3<T> operator ^(const Vec3<T> &v) const { return Vec3<T>(y*v.z-z*v.y, z*v.x-x*v.z, x*v.y-y*v.x); }
+	Vec3<T> operator +(const Vec3<T> &v) const { return Vec3<T>(x+v.x, y+v.y, z+v.z); }
+	Vec3<T> operator +=(const Vec3<T> &v)  { x+=v.x; y+=v.y; z+=v.z; return *this; }
+	Vec3<T> operator -(const Vec3<T> &v) const { return Vec3<T>(x-v.x, y-v.y, z-v.z); }
+	Vec3<T> operator *(float f)          const { return Vec3<T>(x*f, y*f, z*f); }
+	T  operator *(const Vec3<T> &v) const { return x*v.x + y*v.y + z*v.z; }
 	float norm () const { return std::sqrt(x*x+y*y+z*z); }
 	Vec3<T> & normalize(T l=1) { *this = (*this)*(l/norm()); return *this; }
 	template <class > friend std::ostream& operator<<(std::ostream& s, Vec3<T>& v);
