@@ -35,6 +35,26 @@ class GouraudShader : public Shader{
         }
 };
 
+class CelShader : public Shader{
+    private: 
+        Vec3f normals{};
+        float level_p;
+        int levels;
+    public:
+        CelShader(int no_levels){
+            level_p = 1.f / no_levels;
+            levels = no_levels;
+        }
+        Vec3f transform_point(Model &model, const Mat4f &mm, const int v_idx, const int order){
+            normals.raw[order] = std::fmax(0, model.vertex_normal(v_idx) * light); 
+            return to_screen_coords(mm, model.vert(v_idx));
+        }
+        void fragment(Vec3f bar, TGAColor &color) const { 
+            float intensity = floor((bar * normals)/ level_p) * level_p;
+            color = TGAColor(255 * intensity, 255 * intensity , 255 * intensity, 255);
+        }
+};
+
 
 void render(){
 	TGAImage image(width, height, TGAImage::RGB);
@@ -50,17 +70,18 @@ void render(){
         z_buffer[i].fill(-std::numeric_limits<float>::max());
 
     
-    GouraudShader shader;
+    //GouraudShader shader;
+    CelShader shader(6);
     for (int i=0; i < model.nfaces(); i++){
         Vec3f screen_coords[3];
         auto ids = model.face(i);
        for (int j=0; j < 3; j++){
             screen_coords[j] = shader.transform_point(model, mm, ids[j], j);
-
        }    
        rasterize_triangle(screen_coords,  shader, image, z_buffer);
     }
     
+    //todo: zbuffer to tga image
 	image.flip_vertically();
 	image.write_tga_file("output.tga");
 }
