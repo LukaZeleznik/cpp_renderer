@@ -8,7 +8,6 @@
 #include <eigen3/Eigen/Dense>
 #include <math.h>
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template <class T> struct Vec2 {
 	union {
@@ -51,12 +50,12 @@ using Vec2i = Vec2<int>;
 using Vec3f = Vec3<float>;
 using Vec3i = Vec3<int>;
 
-template <class T> std::ostream& operator<<(std::ostream& s, Vec2<T>& v) {
+template <class T> std::ostream& operator<<(std::ostream& s, const Vec2<T>& v) {
 	s << "(" << v.x << ", " << v.y << ")\n";
 	return s;
 }
 
-template <class T> std::ostream& operator<<(std::ostream& s, Vec3<T>& v) {
+template <class T> std::ostream& operator<<(std::ostream& s, const Vec3<T>& v) {
 	s << "(" << v.x << ", " << v.y << ", " << v.z << ")\n";
 	return s;
 }
@@ -69,6 +68,8 @@ template <class T, int M, int N> struct Mat{
     T & operator()(int i, int j){
         return arr[i][j];
     }
+
+    Mat<T, M, N>() = default;
 
     const T & operator()(int i, int j) const {
         return arr[i][j];
@@ -112,13 +113,13 @@ template <class T, int M, int N> struct Mat{
     }
 
 friend std::ostream & operator << (std::ostream & os, const Mat<T, M, N> & matrix) {
-for(int i=0; i<M;++i){
-   for(int j = 0; j< N;++j)
-      os << matrix(i, j) << " ";
-   os << std::endl;
-}
+    for(int i=0; i<M;++i){
+        for(int j = 0; j< N;++j)
+            os << matrix(i, j) << " ";
+        os << std::endl;
+    }
+    return os;
 };
-
 
     
 
@@ -137,6 +138,29 @@ Mat<T, 3, N> from_homog(const Mat<T, 4, N> &m){
     return ret;
 }
 
+template<class T>
+Vec3<T> from_homog(const Mat<T, 4, 1> &m){
+    Vec3<T> ret{};
+    ret.x = m(0,0) / m(3,0);
+    ret.y = m(1,0) / m(3,0);
+    ret.z = m(2,0) / m(3,0);
+    return ret;
+}
+
+template<class T>
+Mat<T, 4, 1> to_homog(const Vec3<T> &vec){
+    Mat<T, 4, 1> ret{};       
+    ret(0, 0) = vec.x;
+    ret(1, 0) = vec.y;
+    ret(2, 0) = vec.z;
+    ret(3, 0) = 1;
+    return ret;
+}
+
+template<class T>
+Vec3<T> to_screen_coords(const Mat<T, 4, 4> &transform_mat, const Vec3f &point){
+    return from_homog(transform_mat * to_homog(point));
+}
 
 
 

@@ -3,7 +3,7 @@ project(Renderer)
 
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/)
-set(SRCS ${CMAKE_CURRENT_LIST_DIR}/tgaimage.cpp ${CMAKE_CURRENT_LIST_DIR}/model.cpp)
+set(SRCS ${CMAKE_CURRENT_LIST_DIR}/tgaimage.cpp ${CMAKE_CURRENT_LIST_DIR}/model.cpp ${CMAKE_CURRENT_LIST_DIR}/a_gl.cpp)
 set(MAIN ${CMAKE_CURRENT_LIST_DIR}/main.cpp)
 
 
