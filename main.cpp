@@ -22,8 +22,14 @@ class GouraudShader : public Shader{
 
     private: 
         Vec3f normals{};
+        Vec3f u{};
+        Vec3f v{};
+        Model *m;
     public:
         Vec3f transform_point(Model &model, const Mat4f &mm, const int v_idx, const int order){
+            u.raw[order] = model.get_texture_ids(v_idx).u;
+            v.raw[order] = model.get_texture_ids(v_idx).v;
+            m = &model;
             //intensity is clipped to min 0
             normals.raw[order] = std::fmax(0, model.vertex_normal(v_idx) * light); 
             return to_screen_coords(mm, model.vert(v_idx));
@@ -31,7 +37,11 @@ class GouraudShader : public Shader{
 
         void fragment(Vec3f bar, TGAColor &color) const { 
             float intensity = bar * normals;
-            color = TGAColor(255 * intensity, 255 * intensity , 255 * intensity, 255);
+            float avg_u = bar * u * m->get_t_width();
+            float avg_v = bar * v * m->get_t_height();
+            TGAColor c = m->get_uv(avg_u, avg_v);
+            color = c * intensity;
+            //color = TGAColor(255 * intensity, 255 * intensity , 255 * intensity, 255);
         }
 };
 
@@ -39,9 +49,9 @@ class CelShader : public Shader{
     private: 
         Vec3f normals{};
         float level_p;
-        int levels;
+        unsigned int levels;
     public:
-        CelShader(int no_levels){
+        CelShader(unsigned int no_levels){
             level_p = 1.f / no_levels;
             levels = no_levels;
         }
@@ -62,7 +72,7 @@ void render(){
     if (!model.read_texture("../african_head_diffuse.tga", width, height)) return;
     if (!model.read("../obj/african_head.obj")) return;
 
-    const Mat4f mm = viewport(0, 0, width, height) * modelView(Degree(-40), Degree(40), Degree(0), 0, -.3);
+    const Mat4f mm = viewport(0, 0, width, height) * modelView(Degree(0), Degree(0), Degree(0), 0, -.3);
     std::array<std::array<float, 800>, 800> z_buffer;
 
     
@@ -70,8 +80,8 @@ void render(){
         z_buffer[i].fill(-std::numeric_limits<float>::max());
 
     
-    //GouraudShader shader;
-    CelShader shader(6);
+    //CelShader shader(100);
+    GouraudShader shader;
     for (int i=0; i < model.nfaces(); i++){
         Vec3f screen_coords[3];
         auto ids = model.face(i);

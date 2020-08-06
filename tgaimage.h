@@ -60,6 +60,10 @@ struct TGAColor {
 		return *this;
 	}
 
+    TGAColor operator *(float intensity){
+        return TGAColor(r * intensity, g * intensity, b * intensity, a);
+    }
+
     friend std::ostream& operator <<(std::ostream &os, const TGAColor &c){
         os << c.r << " " << c.g << " " << c.b << " " << c.a << std::endl;
         return os;
