@@ -23,6 +23,7 @@ void rasterize_triangle(Vec3f *screen_coords,
                         std::array<std::array<float, 800>, 800>  &zbuffer);
 
 const Mat4f viewport(int x, int y, int width, int height, int d=255);
-const Mat4f modelView(Radian rx, Radian ry, Radian rz, float tx, float ty);
+const Mat4f Projection(Radian rx, Radian ry, Radian rz, float tx, float ty);
+const Mat4f InvProjection(Radian rx, Radian ry, Radian rz, float tx, float ty);
 
 #endif

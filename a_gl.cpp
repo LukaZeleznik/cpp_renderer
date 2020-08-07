@@ -34,7 +34,33 @@ const Mat4f viewport(int x, int y, int width, int height, int d=255){
     return m;
 } 
 
-const Mat4f modelView(Radian rx, Radian ry, Radian rz, float tx, float ty){
+const Mat4f InvProjection(Radian rx, Radian ry, Radian rz, float tx, float ty){
+    Mat4f rot_x = Mat4f().identity();
+    Mat4f rot_y = Mat4f().identity();
+    Mat4f rot_z = Mat4f().identity(); 
+    Mat4f translation{}; 
+
+    translation(0,3) = -tx;
+    translation(1,3) = -ty;
+
+    rot_x(1,1) = std::cos(rx);
+    rot_x(2,2) = std::cos(rx);
+    rot_x(2,1) = -std::sin(rx);
+    rot_x(2,1) = std::sin(rx);
+
+    rot_z(0,0) = std::cos(rz);
+    rot_z(1,1) = std::cos(rz);
+    rot_z(1,0) = -std::sin(rz);
+    rot_z(0,1) = std::sin(rz);
+    
+    rot_y(0,0) = std::cos(ry);
+    rot_y(2,0) = std::sin(ry);
+    rot_y(0,2) = -std::sin(ry);
+    rot_y(2,2) = std::cos(ry);
+    return rot_z * rot_y * rot_x + translation;
+}
+
+const Mat4f Projection(Radian rx, Radian ry, Radian rz, float tx, float ty){
     Mat4f rot_x = Mat4f().identity();
     Mat4f rot_y = Mat4f().identity();
     Mat4f rot_z = Mat4f().identity(); 

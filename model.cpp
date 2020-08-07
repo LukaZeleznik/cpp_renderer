@@ -58,11 +58,19 @@ bool Model::read(const char *filename){
     return true;
 }
 
-bool Model::read_texture(const char *filename, int width, int height){
+bool Model::read_texture(const char *filename){
     texture_ = TGAImage();
     if (!texture_.read_tga_file(filename)) return false;
     texture_.flip_vertically();
     return true;
+}
+
+bool Model::read_point_nm(const char *filename){
+    point_nm = TGAImage();
+    if (!point_nm.read_tga_file(filename)) return false;
+    point_nm.flip_vertically();
+    return true;
+
 }
 
 Vec3f Model::vertex_normal(int idx){
@@ -97,6 +105,11 @@ Vec3f Model::vert(int i) {
 
 TGAColor Model::get_uv(int x, int y){
     return texture_.get(x ,y);
+}
+
+Vec3f Model::get_point_nm(int x, int y){
+    TGAColor normals = point_nm.get(x, y);
+    return Vec3f(normals.r, normals.g, normals.b).normalize();
 }
 
 

@@ -17,21 +17,20 @@ const int width = 800;
 const int height = 800;
 const Vec3f light(0, 0, 1);
 
-
 class GouraudShader : public Shader{
 
     private: 
-        Vec3f normals{};
         Vec3f u{};
         Vec3f v{};
         Model *m;
+        Vec3f normals{};
     public:
         Vec3f transform_point(Model &model, const Mat4f &mm, const int v_idx, const int order){
+            normals.raw[order] = std::fmax(0, model.vertex_normal(v_idx) * light); 
             u.raw[order] = model.get_texture_ids(v_idx).u;
             v.raw[order] = model.get_texture_ids(v_idx).v;
             m = &model;
             //intensity is clipped to min 0
-            normals.raw[order] = std::fmax(0, model.vertex_normal(v_idx) * light); 
             return to_screen_coords(mm, model.vert(v_idx));
         }
 
@@ -41,7 +40,35 @@ class GouraudShader : public Shader{
             float avg_v = bar * v * m->get_t_height();
             TGAColor c = m->get_uv(avg_u, avg_v);
             color = c * intensity;
-            //color = TGAColor(255 * intensity, 255 * intensity , 255 * intensity, 255);
+        }
+};
+
+class RGBPNShader : public Shader{
+
+    private: 
+        Vec3f u{};
+        Vec3f v{};
+        Model *m;
+        Mat4f *proj_normals;
+    public:
+        RGBPNShader(Mat4f &inv_mat){
+            proj_normals = &inv_mat;
+        }
+        Vec3f transform_point(Model &model, const Mat4f &mm, const int v_idx, const int order){
+            u.raw[order] = model.get_texture_ids(v_idx).u;
+            v.raw[order] = model.get_texture_ids(v_idx).v;
+            m = &model;
+            //intensity is clipped to min 0
+            return to_screen_coords(mm, model.vert(v_idx));
+        }
+
+        void fragment(Vec3f bar, TGAColor &color) const { 
+            float avg_u = bar * u * m->get_t_width();
+            float avg_v = bar * v * m->get_t_height();
+            Vec3f normal = to_screen_coords(*proj_normals, (m->get_point_nm(avg_u, avg_v)));
+            float intensity = std::fmax(0.f, light * normal);
+            TGAColor c = m->get_uv(avg_u, avg_v);
+            color = c * intensity;
         }
 };
 
@@ -66,13 +93,17 @@ class CelShader : public Shader{
 };
 
 
+
 void render(){
 	TGAImage image(width, height, TGAImage::RGB);
     Model model{};
-    if (!model.read_texture("../african_head_diffuse.tga", width, height)) return;
+    if (!model.read_texture("../african_head_diffuse.tga")) return;
+    if (!model.read_point_nm("../african_head_nm.tga")) return;
     if (!model.read("../obj/african_head.obj")) return;
-
-    const Mat4f mm = viewport(0, 0, width, height) * modelView(Degree(0), Degree(0), Degree(0), 0, -.3);
+    
+    //TODO: extract movements
+    const Mat4f mm = viewport(0, 0, width, height) * Projection(Degree(-10), Degree(-12), Degree(0), 0, 0);
+    Mat4f inv_proj = InvProjection(Degree(-10), Degree(-12), Degree(0), 0, 0);
     std::array<std::array<float, 800>, 800> z_buffer;
 
     
@@ -80,8 +111,9 @@ void render(){
         z_buffer[i].fill(-std::numeric_limits<float>::max());
 
     
-    //CelShader shader(100);
-    GouraudShader shader;
+    //CelShader shader(3);
+    //RGBPNShader shader(inv_proj);
+    GouraudShader shader{};
     for (int i=0; i < model.nfaces(); i++){
         Vec3f screen_coords[3];
         auto ids = model.face(i);
