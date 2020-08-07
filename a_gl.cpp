@@ -57,10 +57,11 @@ const Mat4f InvProjection(Radian rx, Radian ry, Radian rz, float tx, float ty){
     rot_y(2,0) = std::sin(ry);
     rot_y(0,2) = -std::sin(ry);
     rot_y(2,2) = std::cos(ry);
-    return rot_z * rot_y * rot_x + translation;
+    return (rot_z * rot_y * rot_x + translation).transpose();
 }
 
 const Mat4f Projection(Radian rx, Radian ry, Radian rz, float tx, float ty){
+    //succeptible to gimbal lock
     Mat4f rot_x = Mat4f().identity();
     Mat4f rot_y = Mat4f().identity();
     Mat4f rot_z = Mat4f().identity(); 

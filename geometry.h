@@ -112,6 +112,16 @@ template <class T, int M, int N> struct Mat{
         return Vec3f(arr[0][j], arr[1][j], arr[2][j]);
     }
 
+    Mat<T, N, M> transpose() const{
+        Mat<T,N,M> ret{};
+        for (int i=0; i < M; i++){
+            for(int j=0; j < N; j++){
+                ret(j, i) = arr[i][j];
+            }
+        }
+        return ret;
+    }
+
 friend std::ostream & operator << (std::ostream & os, const Mat<T, M, N> & matrix) {
     for(int i=0; i<M;++i){
         for(int j = 0; j< N;++j)
@@ -141,9 +151,15 @@ Mat<T, 3, N> from_homog(const Mat<T, 4, N> &m){
 template<class T>
 Vec3<T> from_homog(const Mat<T, 4, 1> &m){
     Vec3<T> ret{};
-    ret.x = m(0,0) / m(3,0);
-    ret.y = m(1,0) / m(3,0);
-    ret.z = m(2,0) / m(3,0);
+    if (m(3,0)){
+        ret.x = m(0,0) / m(3,0);
+        ret.y = m(1,0) / m(3,0);
+        ret.z = m(2,0) / m(3,0);
+    } else {
+        ret.x = m(0,0);
+        ret.y = m(1,0);
+        ret.z = m(2,0);
+    }
     return ret;
 }
 
@@ -162,6 +178,12 @@ Vec3<T> to_screen_coords(const Mat<T, 4, 4> &transform_mat, const Vec3f &point){
     return from_homog(transform_mat * to_homog(point));
 }
 
+template<class T>
+Vec3<T> rotate_normals(const Mat<T, 4, 4> &transform_mat, const Vec3f &point){
+    auto homog = to_homog(point);
+    homog(3, 0) = 0;
+    return from_homog(transform_mat * homog);
+}
 
 
 class Degree{
