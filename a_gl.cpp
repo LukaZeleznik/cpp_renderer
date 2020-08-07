@@ -46,7 +46,7 @@ const Mat4f InvProjection(Radian rx, Radian ry, Radian rz, float tx, float ty){
     rot_x(1,1) = std::cos(rx);
     rot_x(2,2) = std::cos(rx);
     rot_x(2,1) = -std::sin(rx);
-    rot_x(2,1) = std::sin(rx);
+    rot_x(1,2) = std::sin(rx);
 
     rot_z(0,0) = std::cos(rz);
     rot_z(1,1) = std::cos(rz);

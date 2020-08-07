@@ -15,7 +15,7 @@ const TGAColor white = TGAColor(255, 255, 255, 255);
 const TGAColor red   = TGAColor(255, 0,   0,   255);
 const int width = 800;
 const int height = 800;
-const Vec3f light(0, 0, 1);
+const Vec3f light(0, 1, 1);
 
 class GouraudShader : public Shader{
 
@@ -106,8 +106,8 @@ void render(){
     if (!model.read("../obj/african_head.obj")) return;
     
     //TODO: extract movements
-    Mat4f mm = viewport(0, 0, width, height) * Projection(Degree(-40), Degree(40), Degree(0), 0, 0);
-    Mat4f inv_proj = InvProjection(Degree(-40), Degree(40), Degree(0), 0, 0);
+    Mat4f proj = Projection(Degree(-40), Degree(40), Degree(0), 0, 0);
+    Mat4f mm = viewport(0, 0, width, height) * proj;
     std::array<std::array<float, 800>, 800> z_buffer;
 
     
@@ -116,8 +116,8 @@ void render(){
 
     
     //CelShader shader(3);
-    RGBPNShader shader(inv_proj);
-    //GouraudShader shader(inv_proj);
+    RGBPNShader shader(proj);
+    //GouraudShader shader(proj);
     for (int i=0; i < model.nfaces(); i++){
         Vec3f screen_coords[3];
         auto ids = model.face(i);
