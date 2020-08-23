@@ -77,6 +77,7 @@ class RGBPNShader : public Shader{
 };
 
 class CelShader : public Shader{
+    
     private: 
         Vec3f normals{};
         float level_p;
